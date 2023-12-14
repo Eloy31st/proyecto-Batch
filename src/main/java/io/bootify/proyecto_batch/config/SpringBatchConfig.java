@@ -4,8 +4,11 @@ import io.bootify.proyecto_batch.domain.Transacciones;
 import io.bootify.proyecto_batch.repos.TransaccionesRepository;
 import lombok.AllArgsConstructor;
 import lombok.NoArgsConstructor;
+import org.springframework.batch.core.Job;
+import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
 import org.springframework.batch.core.job.builder.JobBuilder;
+import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
@@ -13,10 +16,10 @@ import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.transaction.PlatformTransactionManager;
 
 @Configuration
 @EnableBatchProcessing
@@ -24,9 +27,9 @@ import org.springframework.core.io.FileSystemResource;
 @NoArgsConstructor
 public class SpringBatchConfig {
 
-    private JobBuilder jobBuilderFactory;
-    private StepBuilder stepBuilderFactory;
     private TransaccionesRepository repository;
+    private JobRepository jobRepository;
+    private PlatformTransactionManager transactionManager;
 
     @Bean
     public FlatFileItemReader<Transacciones> reader(){
@@ -50,10 +53,31 @@ public class SpringBatchConfig {
         lineMapper.setFieldSetMapper(fieldSetMapper);
         return lineMapper;
     }
+
     @Bean
     public TransaccionProcessor processor(){
         return new TransaccionProcessor();
     }
 
-    public RepositoryItemWriter
+    @Bean
+    public RepositoryItemWriter<Transacciones> writer(){
+        RepositoryItemWriter<Transacciones> writer = new RepositoryItemWriter<>();
+        writer.setRepository(repository);
+        writer.setMethodName("save");
+        return writer;
+    }
+    @Bean
+    public Step step1(){
+        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
+                .reader(reader())
+                .processor(processor())
+                .writer(writer())
+                .build();
+    }
+
+    public Job runjob(){
+        return new JobBuilder("importTransacciones", jobRepository)
+                .flow(step1())
+                .end().build();
+    }
 }
