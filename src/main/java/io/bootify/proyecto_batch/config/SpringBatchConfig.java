@@ -13,12 +13,15 @@ import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.data.RepositoryItemWriter;
+import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
+import org.springframework.batch.item.database.JdbcBatchItemWriter;
 import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -27,16 +30,56 @@ import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
+import javax.sql.DataSource;
+
 @Configuration
+@EnableBatchProcessing
 @AllArgsConstructor
 @NoArgsConstructor
 public class SpringBatchConfig {
-
+    @Autowired
     private TransaccionesRepository repository;
+    @Autowired
+    private DataSource dataSource;
 
     @Bean
     public FlatFileItemReader<Transacciones> reader(){
-        FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader();
+        FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader<Transacciones>();
+        itemReader.setResource(new FileSystemResource("src/main/resources/transacciones_enum_3.csv"));
+        itemReader.setLineMapper(new DefaultLineMapper<Transacciones>() {
+            {
+                setLineTokenizer(new DelimitedLineTokenizer() {
+                    {
+                        setNames(new String[] { "fecha", "cantidad", "tipo", "cuentaOrigen", "cuentaDestino" });
+                    }
+                });
+                setFieldSetMapper(new BeanWrapperFieldSetMapper<Transacciones>(){
+                    {
+                        setTargetType(Transacciones.class);
+                    }
+                });
+            }
+        });
+        return itemReader;
+    }
+
+    @Bean
+    public JdbcBatchItemWriter<Transacciones> writer(){
+        JdbcBatchItemWriter<Transacciones> writer = new JdbcBatchItemWriter<Transacciones>();
+        writer.setDataSource(dataSource);
+        writer.setSql("INSERT INTO transacciones (fecha, cantidad, tipo, cuentaOrigen, cuentaDestino) VALUES (:fecha, :cantidad, :tipo, :cuentaOrigen, :cuentaDestino)");
+        writer.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Transacciones>());
+        return writer;
+    }
+    /*
+    @Bean
+    public TransaccionProcessor processor(){
+        return new TransaccionProcessor();
+    }
+
+    @Bean
+    public FlatFileItemReader<Transacciones> reader(){
+        FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader<Transacciones>();
         itemReader.setResource(new FileSystemResource("src/main/resources/transacciones_enum_3.csv"));
         itemReader.setName("csvReader");
         itemReader.setLinesToSkip(1);
@@ -57,31 +100,29 @@ public class SpringBatchConfig {
         return lineMapper;
     }
 
-    @Bean
-    public TransaccionProcessor processor(){
-        return new TransaccionProcessor();
-    }
-
+     */
+    /*
     @Bean
     public JpaItemWriter<Transacciones> writer(EntityManagerFactory emf){
         JpaItemWriter<Transacciones> writer = new JpaItemWriter<>();
         writer.setEntityManagerFactory(emf);
         return writer;
     }
+
+     */
     @Bean
-    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager, JpaItemWriter<Transacciones> writer){
+    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager){
         return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
                 .reader(reader())
-                .processor(processor())
-                .writer(writer)
-                .build();
+                .writer(writer()).build();
     }
     @Bean
-    public Job runjob(JobRepository jobRepository, PlatformTransactionManager transactionManager, JpaItemWriter<Transacciones> writer){
+    public Job runjob(JobRepository jobRepository, PlatformTransactionManager transactionManager){
         return new JobBuilder("importTransacciones", jobRepository)
-                .flow(step1(jobRepository, transactionManager, writer))
+                .flow(step1(jobRepository, transactionManager))
                 .end().build();
     }
+    /*
     @Bean
     public LocalContainerEntityManagerFactoryBean emf() {
         LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
@@ -90,4 +131,6 @@ public class SpringBatchConfig {
         emf.setJpaProperties(jpaProterties());
         return emf;
     }
+
+     */
 }
