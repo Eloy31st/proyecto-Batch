@@ -65,9 +65,8 @@ public class SpringBatchConfig {
         BeanWrapperFieldSetMapper<Transacciones> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
         fieldSetMapper.setTargetType(Transacciones.class);
 
-        CustomDateEditor customDateEditor = new CustomDateEditor(format, false);
         HashMap<Class, PropertyEditor> customEditors = new HashMap<>();
-        customEditors.put(Date.class, customDateEditor);
+        customEditors.put(Date.class, new CustomDateEditor(format, false));
         fieldSetMapper.setCustomEditors(customEditors);
 
         lineMapper.setLineTokenizer(lineTokenizer);
@@ -91,11 +90,11 @@ public class SpringBatchConfig {
 
     @Bean
     public Step step1(ItemReader<Transacciones> reader, RepositoryItemWriter<Transacciones> writer, ItemProcessor<Transacciones, Transacciones> processor){
-        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
+        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(500, transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
-                .taskExecutor(taskExecutor())
+                //.taskExecutor(taskExecutor())
                 .build();
     }
     @Bean
@@ -104,7 +103,7 @@ public class SpringBatchConfig {
                 .start(step1)
                 .build();
     }
-
+    /*
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
@@ -114,6 +113,8 @@ public class SpringBatchConfig {
         taskExecutor.setThreadNamePrefix("batch-");
         return taskExecutor;
     }
+
+     */
 
 
 }
