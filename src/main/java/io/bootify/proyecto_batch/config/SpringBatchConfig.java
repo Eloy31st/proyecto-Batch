@@ -45,43 +45,6 @@ public class SpringBatchConfig {
 
     private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
-
-    /*
-    @Bean
-    public FlatFileItemReader<Transacciones> reader(){
-        FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader<Transacciones>();
-        itemReader.setResource(new ClassPathResource("src/main/resources/transacciones_enum_3.csv"));
-        itemReader.setLineMapper(new DefaultLineMapper<Transacciones>() {
-            {
-                setLineTokenizer(new DelimitedLineTokenizer() {
-                    {
-                        setNames(new String[] { "fecha", "cantidad", "tipo", "cuentaOrigen", "cuentaDestino" });
-                    }
-                });
-                setFieldSetMapper(new BeanWrapperFieldSetMapper<Transacciones>(){
-                    {
-                        setTargetType(Transacciones.class);
-                    }
-                });
-            }
-        });
-        return itemReader;
-    }
-
-    @Bean
-    public JdbcBatchItemWriter<Transacciones> writer(){
-        JdbcBatchItemWriter<Transacciones> writer = new JdbcBatchItemWriter<Transacciones>();
-        writer.setDataSource(dataSource);
-        System.out.println("writer");
-        writer.setSql("INSERT INTO transaccioneses (fecha, cantidad, tipo, cuentaOrigen, cuentaDestino) VALUES (:fecha, :cantidad, :tipo, :cuentaOrigen, :cuentaDestino)");
-        System.out.println("writer2");
-        writer.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Transacciones>());
-        return writer;
-    }
-
-
-    */
-
     @Bean
     public FlatFileItemReader<Transacciones> reader(){
         FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader<Transacciones>();
@@ -133,36 +96,10 @@ public class SpringBatchConfig {
                 .writer(writer)
                 .build();
     }
-    /*
-    @Bean
-    public Step step1(){
-        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
-                .reader(reader())
-                .writer(writer()).build();
-    }
-    */
     @Bean
     public Job runjob(Step step1){
         return new JobBuilder("importTransacciones", jobRepository)
                 .start(step1)
                 .build();
     }
-
-    @Bean
-    public TaskExecutor taskExecutor() {
-        SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor();
-        taskExecutor.setConcurrencyLimit(5);
-        return taskExecutor;
-    }
-    /*
-    @Bean
-    public LocalContainerEntityManagerFactoryBean emf() {
-        LocalContainerEntityManagerFactoryBean emf = new LocalContainerEntityManagerFactoryBean();
-        emf.setPackagesToScan("my.package");
-        emf.setJpaVendorAdapter(jpaAdapter());
-        emf.setJpaProperties(jpaProterties());
-        return emf;
-    }
-
-     */
 }
