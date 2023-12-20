@@ -27,7 +27,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 
 @Entity
 @Data
-@Table(name = "Transaccioneses")
+@Table(name = "transacciones")
 @EntityListeners(AuditingEntityListener.class)
 @Getter
 @Setter

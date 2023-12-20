@@ -17,7 +17,7 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 
 @Controller
-@RequestMapping("/transaccioness")
+@RequestMapping("/transacciones")
 public class TransaccionesController {
 
     private final TransaccionesService transaccionesService;
@@ -33,7 +33,7 @@ public class TransaccionesController {
 
     @GetMapping
     public String list(final Model model) {
-        model.addAttribute("transaccioneses", transaccionesService.findAll());
+        model.addAttribute("transacciones", transaccionesService.findAll());
         return "transacciones/list";
     }
 
@@ -51,7 +51,7 @@ public class TransaccionesController {
         }
         transaccionesService.create(transaccionesDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("transacciones.create.success"));
-        return "redirect:/transaccioness";
+        return "redirect:/transacciones";
     }
 
     @GetMapping("/edit/{id}")
@@ -69,7 +69,7 @@ public class TransaccionesController {
         }
         transaccionesService.update(id, transaccionesDTO);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_SUCCESS, WebUtils.getMessage("transacciones.update.success"));
-        return "redirect:/transaccioness";
+        return "redirect:/transacciones";
     }
 
     @PostMapping("/delete/{id}")
@@ -77,7 +77,7 @@ public class TransaccionesController {
             final RedirectAttributes redirectAttributes) {
         transaccionesService.delete(id);
         redirectAttributes.addFlashAttribute(WebUtils.MSG_INFO, WebUtils.getMessage("transacciones.delete.success"));
-        return "redirect:/transaccioness";
+        return "redirect:/transacciones";
     }
 
 }
