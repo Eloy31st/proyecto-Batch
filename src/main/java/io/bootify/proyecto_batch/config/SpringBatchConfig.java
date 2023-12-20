@@ -91,7 +91,7 @@ public class SpringBatchConfig {
 
     @Bean
     public Step step1(ItemReader<Transacciones> reader, RepositoryItemWriter<Transacciones> writer, ItemProcessor<Transacciones, Transacciones> processor){
-        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(10, transactionManager)
+        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
@@ -108,9 +108,12 @@ public class SpringBatchConfig {
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setCorePoolSize(5);
         taskExecutor.setMaxPoolSize(10);
+        taskExecutor.setQueueCapacity(25);
         taskExecutor.setThreadNamePrefix("batch-");
         return taskExecutor;
     }
+
 
 }
