@@ -27,8 +27,9 @@ import org.springframework.transaction.PlatformTransactionManager;
 
 import java.beans.PropertyEditor;
 
-import java.util.Date;
+import java.time.LocalDate;
 import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.HashMap;
 
 @Configuration
@@ -42,7 +43,7 @@ public class SpringBatchConfig {
 
     private PlatformTransactionManager transactionManager;
 
-    private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
+    private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd");
 
 
     /*
@@ -130,7 +131,7 @@ public class SpringBatchConfig {
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
-                .taskExecutor(taskExecutor()).build();
+                .build();
     }
     /*
     @Bean
@@ -150,7 +151,7 @@ public class SpringBatchConfig {
     @Bean
     public TaskExecutor taskExecutor() {
         SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor();
-        taskExecutor.setConcurrencyLimit(10);
+        taskExecutor.setConcurrencyLimit(5);
         return taskExecutor;
     }
     /*
