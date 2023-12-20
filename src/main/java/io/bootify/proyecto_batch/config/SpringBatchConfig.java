@@ -23,6 +23,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
 import org.springframework.transaction.PlatformTransactionManager;
 
 import java.beans.PropertyEditor;
@@ -90,10 +91,11 @@ public class SpringBatchConfig {
 
     @Bean
     public Step step1(ItemReader<Transacciones> reader, RepositoryItemWriter<Transacciones> writer, ItemProcessor<Transacciones, Transacciones> processor){
-        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
+        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(10, transactionManager)
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
+                .taskExecutor(taskExecutor())
                 .build();
     }
     @Bean
@@ -102,4 +104,13 @@ public class SpringBatchConfig {
                 .start(step1)
                 .build();
     }
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
+        taskExecutor.setMaxPoolSize(10);
+        taskExecutor.setThreadNamePrefix("batch-");
+        return taskExecutor;
+    }
+
 }
