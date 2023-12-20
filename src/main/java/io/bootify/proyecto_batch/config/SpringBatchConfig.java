@@ -12,6 +12,8 @@ import org.springframework.batch.core.configuration.annotation.EnableBatchProces
 import org.springframework.batch.core.job.builder.JobBuilder;
 import org.springframework.batch.core.repository.JobRepository;
 import org.springframework.batch.core.step.builder.StepBuilder;
+import org.springframework.batch.item.ItemProcessor;
+import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.data.RepositoryItemWriter;
 import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
 import org.springframework.batch.item.database.JdbcBatchItemWriter;
@@ -22,10 +24,12 @@ import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.task.SimpleAsyncTaskExecutor;
+import org.springframework.core.task.TaskExecutor;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
@@ -35,17 +39,20 @@ import javax.sql.DataSource;
 @Configuration
 @EnableBatchProcessing
 @AllArgsConstructor
-@NoArgsConstructor
 public class SpringBatchConfig {
-    @Autowired
-    private TransaccionesRepository repository;
-    @Autowired
-    private DataSource dataSource;
 
+    private TransaccionesRepository repository;
+
+    private JobRepository jobRepository;
+
+    private PlatformTransactionManager transactionManager;
+
+
+    /*
     @Bean
     public FlatFileItemReader<Transacciones> reader(){
         FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader<Transacciones>();
-        itemReader.setResource(new FileSystemResource("src/main/resources/transacciones_enum_3.csv"));
+        itemReader.setResource(new ClassPathResource("src/main/resources/transacciones_enum_3.csv"));
         itemReader.setLineMapper(new DefaultLineMapper<Transacciones>() {
             {
                 setLineTokenizer(new DelimitedLineTokenizer() {
@@ -67,15 +74,15 @@ public class SpringBatchConfig {
     public JdbcBatchItemWriter<Transacciones> writer(){
         JdbcBatchItemWriter<Transacciones> writer = new JdbcBatchItemWriter<Transacciones>();
         writer.setDataSource(dataSource);
-        writer.setSql("INSERT INTO transacciones (fecha, cantidad, tipo, cuentaOrigen, cuentaDestino) VALUES (:fecha, :cantidad, :tipo, :cuentaOrigen, :cuentaDestino)");
+        System.out.println("writer");
+        writer.setSql("INSERT INTO transaccioneses (fecha, cantidad, tipo, cuentaOrigen, cuentaDestino) VALUES (:fecha, :cantidad, :tipo, :cuentaOrigen, :cuentaDestino)");
+        System.out.println("writer2");
         writer.setItemSqlParameterSourceProvider(new BeanPropertyItemSqlParameterSourceProvider<Transacciones>());
         return writer;
     }
-    /*
-    @Bean
-    public TransaccionProcessor processor(){
-        return new TransaccionProcessor();
-    }
+
+
+    */
 
     @Bean
     public FlatFileItemReader<Transacciones> reader(){
@@ -100,27 +107,48 @@ public class SpringBatchConfig {
         return lineMapper;
     }
 
-     */
-    /*
     @Bean
-    public JpaItemWriter<Transacciones> writer(EntityManagerFactory emf){
-        JpaItemWriter<Transacciones> writer = new JpaItemWriter<>();
-        writer.setEntityManagerFactory(emf);
+    public TransaccionProcessor processor(){
+        return new TransaccionProcessor();
+    }
+
+    @Bean
+    public RepositoryItemWriter<Transacciones> writer(){
+        RepositoryItemWriter<Transacciones> writer = new RepositoryItemWriter<>();
+        writer.setRepository(repository);
+        writer.setMethodName("save");
         return writer;
     }
 
-     */
+
     @Bean
-    public Step step1(JobRepository jobRepository, PlatformTransactionManager transactionManager){
+    public Step step1(ItemReader<Transacciones> reader, RepositoryItemWriter<Transacciones> writer, ItemProcessor<Transacciones, Transacciones> processor){
+        return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
+                .reader(reader)
+                .processor(processor)
+                .writer(writer)
+                .taskExecutor(taskExecutor()).build();
+    }
+    /*
+    @Bean
+    public Step step1(){
         return new StepBuilder("csv-step", jobRepository).<Transacciones, Transacciones>chunk(100, transactionManager)
                 .reader(reader())
                 .writer(writer()).build();
     }
+    */
     @Bean
-    public Job runjob(JobRepository jobRepository, PlatformTransactionManager transactionManager){
+    public Job runjob(Step step1){
         return new JobBuilder("importTransacciones", jobRepository)
-                .flow(step1(jobRepository, transactionManager))
-                .end().build();
+                .start(step1)
+                .build();
+    }
+
+    @Bean
+    public TaskExecutor taskExecutor() {
+        SimpleAsyncTaskExecutor taskExecutor = new SimpleAsyncTaskExecutor();
+        taskExecutor.setConcurrencyLimit(10);
+        return taskExecutor;
     }
     /*
     @Bean

@@ -1,5 +1,6 @@
 spring:
   datasource:
+    driver-class-name: org.postgresql.Driver
     url: ${JDBC_DATABASE_URL:jdbc:postgresql://localhost:5432/proyecto-Batch}
     username: ${JDBC_DATABASE_USERNAME:postgres}
     password: ${JDBC_DATABASE_PASSWORD:root}
@@ -18,8 +19,8 @@ spring:
             non_contextual_creation: true
         id:
           new_generator_mappings: true
-        dialect: org.hibernate.dialect.PostgreSQLDialect
     show-sql: true
+    generate-ddl: true
   mvc:
     format:
       date: yyyy-MM-dd
