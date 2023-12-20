@@ -2,10 +2,7 @@ package io.bootify.proyecto_batch.config;
 
 import io.bootify.proyecto_batch.domain.Transacciones;
 import io.bootify.proyecto_batch.repos.TransaccionesRepository;
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.EntityManagerFactory;
 import lombok.AllArgsConstructor;
-import lombok.NoArgsConstructor;
 import org.springframework.batch.core.Job;
 import org.springframework.batch.core.Step;
 import org.springframework.batch.core.configuration.annotation.EnableBatchProcessing;
@@ -15,26 +12,24 @@ import org.springframework.batch.core.step.builder.StepBuilder;
 import org.springframework.batch.item.ItemProcessor;
 import org.springframework.batch.item.ItemReader;
 import org.springframework.batch.item.data.RepositoryItemWriter;
-import org.springframework.batch.item.database.BeanPropertyItemSqlParameterSourceProvider;
-import org.springframework.batch.item.database.JdbcBatchItemWriter;
-import org.springframework.batch.item.database.JpaItemWriter;
 import org.springframework.batch.item.file.FlatFileItemReader;
 import org.springframework.batch.item.file.LineMapper;
 import org.springframework.batch.item.file.mapping.BeanWrapperFieldSetMapper;
 import org.springframework.batch.item.file.mapping.DefaultLineMapper;
 import org.springframework.batch.item.file.transform.DelimitedLineTokenizer;
-import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.propertyeditors.CustomDateEditor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.task.SimpleAsyncTaskExecutor;
 import org.springframework.core.task.TaskExecutor;
-import org.springframework.orm.jpa.JpaTransactionManager;
-import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 
-import javax.sql.DataSource;
+import java.beans.PropertyEditor;
+
+import java.util.Date;
+import java.text.SimpleDateFormat;
+import java.util.HashMap;
 
 @Configuration
 @EnableBatchProcessing
@@ -46,6 +41,8 @@ public class SpringBatchConfig {
     private JobRepository jobRepository;
 
     private PlatformTransactionManager transactionManager;
+
+    private static final SimpleDateFormat format = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss.SSSSSS");
 
 
     /*
@@ -87,7 +84,7 @@ public class SpringBatchConfig {
     @Bean
     public FlatFileItemReader<Transacciones> reader(){
         FlatFileItemReader<Transacciones> itemReader = new FlatFileItemReader<Transacciones>();
-        itemReader.setResource(new FileSystemResource("src/main/resources/transacciones_enum_3.csv"));
+        itemReader.setResource(new FileSystemResource("src/main/resources/operaciones_bancarias.csv"));
         itemReader.setName("csvReader");
         itemReader.setLinesToSkip(1);
         itemReader.setLineMapper(lineMapper());
@@ -102,6 +99,12 @@ public class SpringBatchConfig {
         lineTokenizer.setNames("fecha", "cantidad", "tipo", "cuentaOrigen", "cuentaDestino");
         BeanWrapperFieldSetMapper<Transacciones> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
         fieldSetMapper.setTargetType(Transacciones.class);
+
+        CustomDateEditor customDateEditor = new CustomDateEditor(format, false);
+        HashMap<Class, PropertyEditor> customEditors = new HashMap<>();
+        customEditors.put(Date.class, customDateEditor);
+        fieldSetMapper.setCustomEditors(customEditors);
+
         lineMapper.setLineTokenizer(lineTokenizer);
         lineMapper.setFieldSetMapper(fieldSetMapper);
         return lineMapper;

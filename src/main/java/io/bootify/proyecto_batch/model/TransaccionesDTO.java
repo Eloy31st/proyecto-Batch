@@ -3,6 +3,8 @@ package io.bootify.proyecto_batch.model;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import java.time.LocalDate;
+import java.util.Date;
+
 import lombok.Getter;
 import lombok.Setter;
 
@@ -14,7 +16,7 @@ public class TransaccionesDTO {
     private Long id;
 
     @NotNull
-    private LocalDate fecha;
+    private Date fecha;
 
     @NotNull
     private Double cantidad;

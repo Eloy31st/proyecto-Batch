@@ -11,8 +11,8 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.SequenceGenerator;
 import jakarta.persistence.Table;
-import java.time.LocalDate;
 import java.time.OffsetDateTime;
+import java.util.Date;
 
 import lombok.Data;
 import lombok.Getter;
@@ -44,7 +44,7 @@ public class Transacciones {
     private Long id;
 
     @Column(nullable = false)
-    private LocalDate fecha;
+    private Date fecha;
 
     @Column(nullable = false)
     private Double cantidad;
