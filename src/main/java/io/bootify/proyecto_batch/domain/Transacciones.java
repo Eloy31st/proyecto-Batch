@@ -47,7 +47,7 @@ public class Transacciones {
     private Long id;
 
     @Column(nullable = false)
-    private Date fecha;
+    private LocalDate fecha;
 
     @Column(nullable = false)
     private Double cantidad;

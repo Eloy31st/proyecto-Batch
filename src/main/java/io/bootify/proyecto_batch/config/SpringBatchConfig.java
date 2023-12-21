@@ -30,7 +30,6 @@ import java.beans.PropertyEditor;
 
 import java.time.LocalDate;
 import java.text.SimpleDateFormat;
-import java.util.Date;
 import java.util.HashMap;
 
 @Configuration
@@ -62,13 +61,13 @@ public class SpringBatchConfig {
         lineTokenizer.setDelimiter(",");
         lineTokenizer.setStrict(false);
         lineTokenizer.setNames("fecha", "cantidad", "tipo", "cuentaOrigen", "cuentaDestino");
-        BeanWrapperFieldSetMapper<Transacciones> fieldSetMapper = new BeanWrapperFieldSetMapper<>();
-        fieldSetMapper.setTargetType(Transacciones.class);
-
+        CustomFieldSetMapper fieldSetMapper = new CustomFieldSetMapper();
+        /*
         HashMap<Class, PropertyEditor> customEditors = new HashMap<>();
-        customEditors.put(Date.class, new CustomDateEditor(format, false));
+        customEditors.put(LocalDate.class, new CustomDateEditor(format, false));
         fieldSetMapper.setCustomEditors(customEditors);
 
+         */
         lineMapper.setLineTokenizer(lineTokenizer);
         lineMapper.setFieldSetMapper(fieldSetMapper);
         return lineMapper;
@@ -94,7 +93,7 @@ public class SpringBatchConfig {
                 .reader(reader)
                 .processor(processor)
                 .writer(writer)
-                //.taskExecutor(taskExecutor())
+                .taskExecutor(taskExecutor())
                 .build();
     }
     @Bean
@@ -103,7 +102,7 @@ public class SpringBatchConfig {
                 .start(step1)
                 .build();
     }
-    /*
+
     @Bean
     public TaskExecutor taskExecutor() {
         ThreadPoolTaskExecutor taskExecutor = new ThreadPoolTaskExecutor();
@@ -113,8 +112,6 @@ public class SpringBatchConfig {
         taskExecutor.setThreadNamePrefix("batch-");
         return taskExecutor;
     }
-
-     */
 
 
 }
